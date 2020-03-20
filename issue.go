@@ -96,6 +96,33 @@ type Epic struct {
 	Done    bool   `json:"done" structs:"done"`
 }
 
+// A description field may be a plain old string or a document structure. This
+// is extremely annoying as they have the same field name and cannot both unmarshal
+// to the same type without jumping through hoops.
+type Document string
+
+func (d *Document) UnmarshalJSON(data []byte) error {
+	if len(data) < 1 {
+		return nil
+	}
+	if data[0] == '"' {
+		var s string
+		err := json.Unmarshal(data, &s)
+		if err != nil {
+			return err
+		}
+		*d = (Document)(s)
+	} else {
+		var v map[string]interface{}
+		err := json.Unmarshal(data, &v)
+		if err != nil {
+			return err
+		}
+		*d = "This is the dumb kind of document"
+	}
+	return nil
+}
+
 // IssueFields represents single fields of a JIRA issue.
 // Every JIRA issue has several fields attached.
 type IssueFields struct {
@@ -114,7 +141,7 @@ type IssueFields struct {
 	Watches                       *Watches          `json:"watches,omitempty" structs:"watches,omitempty"`
 	Assignee                      *User             `json:"assignee,omitempty" structs:"assignee,omitempty"`
 	Updated                       Time              `json:"updated,omitempty" structs:"updated,omitempty"`
-	Description                   string            `json:"description,omitempty" structs:"description,omitempty"`
+	Description                   Document          `json:"description,omitempty" structs:"description,omitempty"`
 	Summary                       string            `json:"summary,omitempty" structs:"summary,omitempty"`
 	Creator                       *User             `json:"Creator,omitempty" structs:"Creator,omitempty"`
 	Reporter                      *User             `json:"reporter,omitempty" structs:"reporter,omitempty"`
