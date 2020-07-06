@@ -96,29 +96,58 @@ type Epic struct {
 	Done    bool   `json:"done" structs:"done"`
 }
 
+type Description struct {
+	Version int       `json:"version,omitempty"`
+	Type    string    `json:"type,omitempty"`
+	Content []Content `json:"content,omitempty"`
+}
+
+type Content struct {
+	Type    string    `json:"type,omitempty"`
+	Text    string    `json:"text,omitempty"`
+	Content []Content `json:"content,omitempty"`
+}
+
 // A description field may be a plain old string or a document structure. This
 // is extremely annoying as they have the same field name and cannot both unmarshal
 // to the same type without jumping through hoops.
-type Document string
+type Document struct {
+	Description Description `json:"description"`
+	Raw         []byte      `json:"raw"`
+}
+
+func (d *Document) String() string {
+	return string(d.Raw)
+}
 
 func (d *Document) UnmarshalJSON(data []byte) error {
 	if len(data) < 1 {
 		return nil
 	}
+
+	d.Raw = data
+
 	if data[0] == '"' {
 		var s string
 		err := json.Unmarshal(data, &s)
 		if err != nil {
 			return err
 		}
-		*d = (Document)(s)
+		content := Content{
+			Type: "text",
+			Text: s,
+		}
+
+		d.Description.Content = []Content{content}
+
 	} else {
-		var v map[string]interface{}
-		err := json.Unmarshal(data, &v)
+		var description Description
+		err := json.Unmarshal(data, &description)
 		if err != nil {
 			return err
 		}
-		*d = "This is the dumb kind of document"
+
+		d.Description = description
 	}
 	return nil
 }
