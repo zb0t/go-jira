@@ -35,6 +35,17 @@ func main() {
 		return
 	}
 
+	description := jira.Document{
+		Description: jira.Description{
+			Version: 1,
+			Type:    "doc",
+			Content: []jira.Content{
+				{Type: "bulletList", Content: []jira.Content{{Type: "listItem", Content: []jira.Content{{Type: "paragraph", Content: []jira.Content{{Type: "text", Text: "Bigtable / BTX request should have a per-request timeout, not per operation."}}}}}}},
+			},
+		},
+		Raw: nil,
+	}
+
 	i := jira.Issue{
 		Fields: &jira.IssueFields{
 			Assignee: &jira.User{
@@ -43,7 +54,7 @@ func main() {
 			Reporter: &jira.User{
 				Name: "youruser",
 			},
-			Description: "Test Issue",
+			Description: description,
 			Type: jira.IssueType{
 				Name: "Bug",
 			},

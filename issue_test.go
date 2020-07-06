@@ -17,6 +17,17 @@ import (
 	"github.com/trivago/tgo/tcontainer"
 )
 
+var sampleIssueDescription = Document{
+	Description: Description{
+		Version: 1,
+		Type:    "doc",
+		Content: []Content{
+			{Type: "bulletList", Content: []Content{{Type: "listItem", Content: []Content{{Type: "paragraph", Content: []Content{{Type: "text", Text: "Bigtable / BTX request should have a per-request timeout, not per operation."}}}}}}},
+		},
+	},
+	Raw: []byte("{\"version\":1,\"type\":\"doc\",\"content\":[{\"type\":\"bulletList\",\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Bigtable / BTX request should have a per-request timeout, not per operation.\"}]}]}]}]}"),
+}
+
 func TestIssueService_Get_Success(t *testing.T) {
 	setup()
 	defer teardown()
@@ -71,9 +82,10 @@ func TestIssueService_Create(t *testing.T) {
 
 	i := &Issue{
 		Fields: &IssueFields{
-			Description: "example bug report",
+			Description: sampleIssueDescription,
 		},
 	}
+
 	issue, _, err := testClient.Issue.Create(i)
 	if issue == nil {
 		t.Error("Expected issue. Issue is nil")
@@ -96,7 +108,7 @@ func TestIssueService_CreateThenGet(t *testing.T) {
 
 	i := &Issue{
 		Fields: &IssueFields{
-			Description: "example bug report",
+			Description: sampleIssueDescription,
 			Created:     Time(time.Now()),
 		},
 	}
@@ -144,7 +156,7 @@ func TestIssueService_Update(t *testing.T) {
 	i := &Issue{
 		Key: "PROJ-9001",
 		Fields: &IssueFields{
-			Description: "example bug report",
+			Description: sampleIssueDescription,
 		},
 	}
 	issue, _, err := testClient.Issue.Update(i)
@@ -891,7 +903,7 @@ func TestIssueService_DoTransitionWithPayload(t *testing.T) {
 func TestIssueFields_TestMarshalJSON_PopulateUnknownsSuccess(t *testing.T) {
 	data := `{
 			"customfield_123":"test",
-			"description":"example bug report",
+			"description":{"version":1,"type":"doc","content":[{"type":"bulletList","content":[{"type":"listItem","content":[{"type":"paragraph","content":[{"type":"text","text":"Bigtable / BTX request should have a per-request timeout, not per operation."}]}]}]}]},
 			"project":{
 				"self":"http://www.example.com/jira/rest/api/2/project/EX",
 				"id":"10000",
@@ -964,15 +976,15 @@ func TestIssueFields_TestMarshalJSON_PopulateUnknownsSuccess(t *testing.T) {
 	if len(i.Unknowns) != 1 {
 		t.Errorf("Expected 1 unknown field to be present, received %d", len(i.Unknowns))
 	}
-	if i.Description != "example bug report" {
-		t.Errorf("Expected description to be \"%s\", received \"%s\"", "example bug report", i.Description)
+	if i.Description.Description.Content[0].Content[0].Content[0].Content[0].Text != "Bigtable / BTX request should have a per-request timeout, not per operation." {
+		t.Errorf("Expected description to be \"%s\", received \"%s\"", "example bug report", i.Description.String())
 	}
 
 }
 
 func TestIssueFields_MarshalJSON_OmitsEmptyFields(t *testing.T) {
 	i := &IssueFields{
-		Description: "blahblah",
+		Description: sampleIssueDescription,
 		Type: IssueType{
 			Name: "Story",
 		},
@@ -1010,7 +1022,6 @@ func TestIssueFields_MarshalJSON_OmitsEmptyFields(t *testing.T) {
 
 func TestIssueFields_MarshalJSON_Success(t *testing.T) {
 	i := &IssueFields{
-		Description: "example bug report",
 		Unknowns: tcontainer.MarshalMap{
 			"customfield_123": "test",
 		},
