@@ -36,14 +36,11 @@ func main() {
 	}
 
 	description := jira.Document{
-		Description: jira.Description{
-			Version: 1,
-			Type:    "doc",
-			Content: []jira.Content{
-				{Type: "bulletList", Content: []jira.Content{{Type: "listItem", Content: []jira.Content{{Type: "paragraph", Content: []jira.Content{{Type: "text", Text: "Bigtable / BTX request should have a per-request timeout, not per operation."}}}}}}},
-			},
+		Version: 1,
+		Type:    "doc",
+		Content: []jira.Content{
+			{Type: "bulletList", Content: []jira.Content{{Type: "listItem", Content: []jira.Content{{Type: "paragraph", Content: []jira.Content{{Type: "text", Text: "Bigtable / BTX request should have a per-request timeout, not per operation."}}}}}}},
 		},
-		Raw: nil,
 	}
 
 	i := jira.Issue{

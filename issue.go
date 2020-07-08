@@ -96,36 +96,44 @@ type Epic struct {
 	Done    bool   `json:"done" structs:"done"`
 }
 
-type Description struct {
-	Version int       `json:"version,omitempty"`
-	Type    string    `json:"type,omitempty"`
-	Content []Content `json:"content,omitempty"`
+type Document struct {
+	Version int        `json:"version,omitempty"`
+	Type    string     `json:"type,omitempty"`
+	Content ContentSet `json:"content,omitempty"`
 }
 
 type Content struct {
-	Type    string    `json:"type,omitempty"`
-	Text    string    `json:"text,omitempty"`
-	Content []Content `json:"content,omitempty"`
+	Type    string     `json:"type,omitempty"`
+	Text    string     `json:"text,omitempty"`
+	Content ContentSet `json:"content,omitempty"`
 }
 
-// A description field may be a plain old string or a document structure. This
-// is extremely annoying as they have the same field name and cannot both unmarshal
-// to the same type without jumping through hoops.
-type Document struct {
-	Description Description `json:"description"`
-	Raw         []byte      `json:"raw"`
+const (
+	Doc  = "doc"
+	Text = "text"
+)
+
+type ContentSet []Content
+
+func (c ContentSet) String() string {
+	b := &strings.Builder{}
+	for i, e := range c {
+		if i > 0 {
+			b.WriteString("  ")
+		}
+		b.WriteString(e.String())
+	}
+	return b.String()
 }
 
-func (d *Document) String() string {
-	return string(d.Raw)
+func (c Content) String() string {
+	return c.Text + " " + c.Content.String()
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
 	if len(data) < 1 {
 		return nil
 	}
-
-	d.Raw = data
 
 	if data[0] == '"' {
 		var s string
@@ -134,20 +142,22 @@ func (d *Document) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		content := Content{
-			Type: "text",
+			Type: Text,
 			Text: s,
 		}
 
-		d.Description.Content = []Content{content}
+		d.Content = []Content{content}
 
 	} else {
+		type Description Document
 		var description Description
+
 		err := json.Unmarshal(data, &description)
 		if err != nil {
 			return err
 		}
 
-		d.Description = description
+		*d = Document(description)
 	}
 	return nil
 }
