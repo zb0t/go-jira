@@ -119,7 +119,7 @@ func (c ContentSet) String() string {
 	b := &strings.Builder{}
 	for i, e := range c {
 		if i > 0 {
-			b.WriteString("  ")
+			b.WriteString(" ")
 		}
 		b.WriteString(e.String())
 	}
@@ -127,7 +127,17 @@ func (c ContentSet) String() string {
 }
 
 func (c Content) String() string {
-	return c.Text + " " + c.Content.String()
+	b := &strings.Builder{}
+	if c.Text != "" {
+		b.WriteString(c.Text)
+	}
+	if v := c.Content.String(); v != "" {
+		if b.Len() > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(v)
+	}
+	return b.String()
 }
 
 func (d *Document) UnmarshalJSON(data []byte) error {
