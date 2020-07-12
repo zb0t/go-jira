@@ -102,10 +102,12 @@ type Document struct {
 	Content ContentSet `json:"content,omitempty"`
 }
 
-type Content struct {
-	Type    string     `json:"type,omitempty"`
-	Text    string     `json:"text,omitempty"`
-	Content ContentSet `json:"content,omitempty"`
+func (d Document) String() string {
+	if c := d.Content; c != nil {
+		return c.String()
+	} else {
+		return ""
+	}
 }
 
 const (
@@ -124,6 +126,12 @@ func (c ContentSet) String() string {
 		b.WriteString(e.String())
 	}
 	return b.String()
+}
+
+type Content struct {
+	Type    string     `json:"type,omitempty"`
+	Text    string     `json:"text,omitempty"`
+	Content ContentSet `json:"content,omitempty"`
 }
 
 func (c Content) String() string {
