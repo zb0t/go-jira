@@ -96,29 +96,78 @@ type Epic struct {
 	Done    bool   `json:"done" structs:"done"`
 }
 
-// A description field may be a plain old string or a document structure. This
-// is extremely annoying as they have the same field name and cannot both unmarshal
-// to the same type without jumping through hoops.
-type Document string
+type Document struct {
+	Version int        `json:"version,omitempty"`
+	Type    string     `json:"type,omitempty"`
+	Content ContentSet `json:"content,omitempty"`
+}
+
+type Content struct {
+	Type    string     `json:"type,omitempty"`
+	Text    string     `json:"text,omitempty"`
+	Content ContentSet `json:"content,omitempty"`
+}
+
+const (
+	Doc  = "doc"
+	Text = "text"
+)
+
+type ContentSet []Content
+
+func (c ContentSet) String() string {
+	b := &strings.Builder{}
+	for i, e := range c {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(e.String())
+	}
+	return b.String()
+}
+
+func (c Content) String() string {
+	b := &strings.Builder{}
+	if c.Text != "" {
+		b.WriteString(c.Text)
+	}
+	if v := c.Content.String(); v != "" {
+		if b.Len() > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(v)
+	}
+	return b.String()
+}
 
 func (d *Document) UnmarshalJSON(data []byte) error {
 	if len(data) < 1 {
 		return nil
 	}
+
 	if data[0] == '"' {
 		var s string
 		err := json.Unmarshal(data, &s)
 		if err != nil {
 			return err
 		}
-		*d = (Document)(s)
+		content := Content{
+			Type: Text,
+			Text: s,
+		}
+
+		d.Content = []Content{content}
+
 	} else {
-		var v map[string]interface{}
-		err := json.Unmarshal(data, &v)
+		type Description Document
+		var description Description
+
+		err := json.Unmarshal(data, &description)
 		if err != nil {
 			return err
 		}
-		*d = "This is the dumb kind of document"
+
+		*d = Document(description)
 	}
 	return nil
 }
